@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冰塊融化實驗室 - 20秒隨機 Fair Test 挑戰賽</title>
+  <style>
+    :root {
+      --primary: #2B6CB0;
+      --secondary: #4299E1;
+      --accent: #ECC94B;
+      --bg: #EBF8FF;
+      --card-bg: #FFFFFF;
+      --text: #2D3748;
+      --correct: #38A169;
+      --incorrect: #E53E3E;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .lab-container {
+      width: 100%;
+      max-width: 900px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      padding: 20px;
+      border: 3px solid #BEE3F8;
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 2px dashed #CBD5E0;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    /* 挑戰模式目標卡片 */
+    .mission-card {
+      background: #FEFCBF;
+      border: 2px solid #D69E2E;
+      border-radius: 12px;
+      padding: 12px 20px;
+      text-align: center;
+      margin-bottom: 15px;
+      position: relative;
+    }
+
+    .timer-display {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--incorrect);
+      background: white;
+      padding: 4px 16px;
+      border-radius: 20px;
+      border: 2px solid var(--incorrect);
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    /* 實驗對比區 */
+    .lab-stage {
+      display: flex;
+      justify-content: space-around;
+      gap: 15px;
+      background: #F7FAFC;
+      border-radius: 16px;
+      padding: 15px;
+      border: 1px solid #E2E8F0;
+    }
+
+    .setup-box {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      border: 2px solid #E2E8F0;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 水槽繪製 */
+    .beaker {
+      width: 140px;
+      height: 120px;
+      border: 4px solid #A0AEC0;
+      border-top: none;
+      border-radius: 0 0 30px 30px;
+      position: relative;
+      background: #EDF2F7;
+      margin: 15px 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .water {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(66, 153, 225, 0.5);
+      transition: height 0.3s;
+    }
+
+    .water.salt {
+      background: rgba(49, 130, 206, 0.7);
+    }
+
+    /* 冰塊繪製 */
+    .ice {
+      z-index: 2;
+      background: #EBF8FF;
+      border: 2px solid #90CDF4;
+      box-shadow: 0 0 8px rgba(255,255,255,0.8);
+      transition: transform 0.1s linear;
+    }
+
+    .ice.ball {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .ice.cube {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+    }
+
+    /* 控制項 */
+    .control-group {
+      width: 100%;
+      margin-top: 10px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    select {
+      width: 100%;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #CBD5E0;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+
+    /* 診斷儀表板 */
+    .dashboard {
+      margin-top: 15px;
+      padding: 15px;
+      background: #EDF2F7;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .status-badge.fair { background: var(--correct); }
+    .status-badge.unfair { background: var(--incorrect); }
+
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+      box-shadow: 0 4px 0 #2C5282;
+      transition: all 0.1s;
+    }
+
+    .action-btn.start-challenge {
+      background: #E53E3E;
+      box-shadow: 0 4px 0 #9B2C2C;
+      font-size: 16px;
+    }
+
+    .action-btn.submit-challenge {
+      background: #DD6B20;
+      box-shadow: 0 4px 0 #C05621;
+    }
+
+    .action-btn:disabled {
+      background: #A0AEC0;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .action-btn:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #2C5282;
+    }
+
+    #resultArea {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #CBD5E0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="lab-container">
+  <div class="header">
+    <h2>⚡ 20 秒 Fair Test 隨機挑戰賽</h2>
+    <p style="margin:0; font-size:14px; color:#718096;">仔細閱讀任務指示，在限時內完成 Fair Test 設定！</p>
+  </div>
+
+  <!-- 題目任務卡片 -->
+  <div class="mission-card">
+    <h3 style="margin:0; color:#9B2C2C;">🎯 任務要求 (Mission):</h3>
+    <p id="missionText" style="font-size:18px; font-weight:bold; margin:5px 0; color:#2D3748;">
+      請點擊下方按鈕開始挑戰！
+    </p>
+    <div style="font-size:13px; color:#742A2A;">
+      （提示：請在 20 秒內調整兩邊參數，確保符合目標要求的 Fair Test！）
+    </div>
+    <div class="timer-display" id="timer">⏱️ 20.0 s</div>
+  </div>
+
+  <!-- 實驗對比區 -->
+  <div class="lab-stage">
+    <!-- Set-up 1 -->
+    <div class="setup-box">
+      <h3 style="margin:0; color:var(--primary);">Set-up 1</h3>
+      <div class="beaker">
+        <div class="water" id="water1"></div>
+        <div class="ice ball" id="ice1"></div>
+      </div>
+      <div class="control-group">
+        <label><b>1. Water Type:</b></label>
+        <select id="waterType1" onchange="updateVisuals()" disabled>
+          <option value="Fresh water">Fresh water (淡水)</option>
+          <option value="Salt water">Salt water (鹹水)</option>
+        </select>
+
+        <label><b>2. Water Volume:</b></label>
+        <select id="waterVol1" onchange="updateVisuals()" disabled>
+          <option value="1 L">1 L</option>
+          <option value="2 L">2 L</option>
+        </select>
+
+        <label><b>3. Ice Shape:</b></label>
+        <select id="iceShape1" onchange="updateVisuals()" disabled>
+          <option value="ice ball">ice ball (冰球)</option>
+          <option value="ice cube">ice cube (冰塊)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Set-up 2 -->
+    <div class="setup-box">
+      <h3 style="margin:0; color:var(--primary);">Set-up 2</h3>
+      <div class="beaker">
+        <div class="water" id="water2"></div>
+        <div class="ice ball" id="ice2"></div>
+      </div>
+      <div class="control-group">
+        <label><b>1. Water Type:</b></label>
+        <select id="waterType2" onchange="updateVisuals()" disabled>
+          <option value="Fresh water">Fresh water (淡水)</option>
+          <option value="Salt water">Salt water (鹹水)</option>
+        </select>
+
+        <label><b>2. Water Volume:</b></label>
+        <select id="waterVol2" onchange="updateVisuals()" disabled>
+          <option value="1 L">1 L</option>
+          <option value="2 L">2 L</option>
+        </select>
+
+        <label><b>3. Ice Shape:</b></label>
+        <select id="iceShape2" onchange="updateVisuals()" disabled>
+          <option value="ice ball">ice ball (冰球)</option>
+          <option value="ice cube">ice cube (冰塊)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 診斷儀表板 -->
+  <div class="dashboard">
+    <div class="btn-group">
+      <button class="action-btn start-challenge" id="startBtn" onclick="startChallenge()">🚀 開始 20秒 挑戰 (Start Challenge)</button>
+      <button class="action-btn submit-challenge" id="submitBtn" onclick="submitChallenge()" disabled>✅ 提交答案 (Submit)</button>
+    </div>
+
+    <!-- 答案結果區 -->
+    <div id="resultArea">
+      <div style="margin-top:10px;">
+        <span class="status-badge" id="statusBadge">Result</span>
+      </div>
+      <div id="resultTitle" style="font-size:18px; font-weight:bold; margin:5px 0;"></div>
+      <div id="explanationText" style="font-size:14px; color:#4A5568; line-height:1.5;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let timeLeft = 20.0;
+  let countdownTimer = null;
+  let currentTargetKey = ""; // 記錄當前抽到的目標變項 ("vol", "shape", "type")
+
+  const missions = [
+    {
+      key: "vol",
+      targetVarName: "Water Volume",
+      text: `"Compare how the <span style="color:#C05621; text-decoration:underline;">volume of water</span> affecting the rate of melting"`
+    },
+    {
+      key: "shape",
+      targetVarName: "Shape of Ice",
+      text: `"Compare how the <span style="color:#C05621; text-decoration:underline;">shape of ice</span> affecting the rate of melting"`
+    },
+    {
+      key: "type",
+      targetVarName: "Type of Water",
+      text: `"Compare how the <span style="color:#C05621; text-decoration:underline;">type of water</span> affecting the rate of melting"`
+    }
+  ];
+
+  function setSelectsDisabled(disabled) {
+    document.getElementById('waterType1').disabled = disabled;
+    document.getElementById('waterVol1').disabled = disabled;
+    document.getElementById('iceShape1').disabled = disabled;
+    document.getElementById('waterType2').disabled = disabled;
+    document.getElementById('waterVol2').disabled = disabled;
+    document.getElementById('iceShape2').disabled = disabled;
+  }
+
+  function updateVisuals() {
+    let wt1 = document.getElementById('waterType1').value;
+    let wv1 = document.getElementById('waterVol1').value;
+    let is1 = document.getElementById('iceShape1').value;
+
+    let wt2 = document.getElementById('waterType2').value;
+    let wv2 = document.getElementById('waterVol2').value;
+    let is2 = document.getElementById('iceShape2').value;
+
+    // 更新 Set-up 1 視覺
+    let water1 = document.getElementById('water1');
+    water1.style.height = (wv1 === '1 L') ? '40%' : '70%';
+    water1.className = 'water ' + (wt1 === 'Salt water' ? 'salt' : '');
+    document.getElementById('ice1').className = 'ice ' + (is1 === 'ice ball' ? 'ball' : 'cube');
+
+    // 更新 Set-up 2 視覺
+    let water2 = document.getElementById('water2');
+    water2.style.height = (wv2 === '1 L') ? '40%' : '70%';
+    water2.className = 'water ' + (wt2 === 'Salt water' ? 'salt' : '');
+    document.getElementById('ice2').className = 'ice ' + (is2 === 'ice ball' ? 'ball' : 'cube');
+  }
+
+  function startChallenge() {
+    // 隨機抽取任務
+    let randomIndex = Math.floor(Math.random() * missions.length);
+    let selectedMission = missions[randomIndex];
+    currentTargetKey = selectedMission.key;
+    document.getElementById('missionText').innerHTML = selectedMission.text;
+
+    // 隨機初始設定干擾項，避免預設即正確
+    document.getElementById('waterType1').value = "Fresh water";
+    document.getElementById('waterVol1').value = "1 L";
+    document.getElementById('iceShape1').value = "ice ball";
+
+    document.getElementById('waterType2').value = (Math.random() > 0.5) ? "Salt water" : "Fresh water";
+    document.getElementById('waterVol2').value = (Math.random() > 0.5) ? "2 L" : "1 L";
+    document.getElementById('iceShape2').value = (Math.random() > 0.5) ? "ice cube" : "ice ball";
+
+    updateVisuals();
+    setSelectsDisabled(false);
+
+    document.getElementById('resultArea').style.display = 'none';
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('submitBtn').disabled = false;
+
+    // 設定 20 秒倒數
+    timeLeft = 20.0;
+    document.getElementById('timer').innerText = `⏱️ ${timeLeft.toFixed(1)} s`;
+
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      timeLeft -= 0.1;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        document.getElementById('timer').innerText = `⏱️ 0.0 s`;
+        clearInterval(countdownTimer);
+        submitChallenge();
+      } else {
+        document.getElementById('timer').innerText = `⏱️ ${timeLeft.toFixed(1)} s`;
+      }
+    }, 100);
+  }
+
+  function submitChallenge() {
+    clearInterval(countdownTimer);
+    setSelectsDisabled(true);
+
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').innerText = "🔄 換下一題 (Next Challenge)";
+
+    evaluateAnswer();
+  }
+
+  function evaluateAnswer() {
+    let wt1 = document.getElementById('waterType1').value;
+    let wv1 = document.getElementById('waterVol1').value;
+    let is1 = document.getElementById('iceShape1').value;
+
+    let wt2 = document.getElementById('waterType2').value;
+    let wv2 = document.getElementById('waterVol2').value;
+    let is2 = document.getElementById('iceShape2').value;
+
+    let isVolDifferent = (wv1 !== wv2);
+    let isTypeDifferent = (wt1 !== wt2);
+    let isShapeDifferent = (is1 !== is2);
+
+    let badge = document.getElementById('statusBadge');
+    let title = document.getElementById('resultTitle');
+    let expText = document.getElementById('explanationText');
+
+    let isSuccess = false;
+    let targetName = "";
+    let errorReasons = [];
+
+    // 根據抽到的題目 key 進行審核
+    if (currentTargetKey === "vol") {
+      targetName = "Water Volume";
+      if (isVolDifferent && !isTypeDifferent && !isShapeDifferent) isSuccess = true;
+      if (!isVolDifferent) errorReasons.push(`❌ <b>Water Volume 設定相同</b>：題目要比較 Water Volume，兩邊水量必須不同！`);
+      if (isTypeDifferent) errorReasons.push(`❌ <b>Water Type 不一致</b> (${wt1} vs ${wt2})：這不是 Constant！`);
+      if (isShapeDifferent) errorReasons.push(`❌ <b>Ice Shape 不一致</b> (${is1} vs ${is2})：這不是 Constant！`);
+    } else if (currentTargetKey === "shape") {
+      targetName = "Shape of Ice";
+      if (isShapeDifferent && !isVolDifferent && !isTypeDifferent) isSuccess = true;
+      if (!isShapeDifferent) errorReasons.push(`❌ <b>Ice Shape 設定相同</b>：題目要比較 Shape of Ice，兩邊冰塊形狀必須不同！`);
+      if (isVolDifferent) errorReasons.push(`❌ <b>Water Volume 不一致</b> (${wv1} vs ${wv2})：這不是 Constant！`);
+      if (isTypeDifferent) errorReasons.push(`❌ <b>Water Type 不一致</b> (${wt1} vs ${wt2})：這不是 Constant！`);
+    } else if (currentTargetKey === "type") {
+      targetName = "Type of Water";
+      if (isTypeDifferent && !isVolDifferent && !isShapeDifferent) isSuccess = true;
+      if (!isTypeDifferent) errorReasons.push(`❌ <b>Water Type 設定相同</b>：題目要比較 Type of Water，兩邊水質必須不同！`);
+      if (isVolDifferent) errorReasons.push(`❌ <b>Water Volume 不一致</b> (${wv1} vs ${wv2})：這不是 Constant！`);
+      if (isShapeDifferent) errorReasons.push(`❌ <b>Ice Shape 不一致</b> (${is1} vs ${is2})：這不是 Constant！`);
+    }
+
+    if (isSuccess) {
+      badge.className = "status-badge fair";
+      badge.innerText = "PASS 🎉";
+      title.innerText = "🌟 挑戰成功！完美設定 Fair Test！";
+      title.style.color = "var(--correct)";
+      expText.innerHTML = `
+        <b>優異表現分析：</b><br>
+        ✅ <b>Variable to be changed:</b> ${targetName}<br>
+        ✅ <b>Variables kept constant:</b> 其餘兩個變項皆已保持相同<br>
+        你成功做到了「只改變 ${targetName}，其餘條件保持不變」！
+      `;
+    } else {
+      badge.className = "status-badge unfair";
+      badge.innerText = "FAIL ❌";
+      title.innerText = "⚠️ 挑戰失敗，未符合 Fair Test 要求！";
+      title.style.color = "var(--incorrect)";
+
+      expText.innerHTML = `
+        <b>錯誤原因拆解：</b><br>
+        ${errorReasons.join('<br>')}<br><br>
+        💡 <i>謹記：要探究 ${targetName}，<b>只有 ${targetName} 可以改變</b>，其他所有條件必須完全相同 (Kept Constant)！</i>
+      `;
+    }
+
+    document.getElementById('resultArea').style.display = 'block';
+  }
+
+  // 初始化視覺
+  updateVisuals();
+</script>
+
+</body>
+</html>
